@@ -1,0 +1,56 @@
+services:
+  tester_grafana:
+    container_name: tester_grafana
+    hostname: tester_grafana
+    image: grafana/grafana:12.0.2 # https://hub.docker.com/r/grafana/grafana/tags
+    environment:
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+      - GF_AUTH_ANONYMOUS_ENABLED=true
+      - GF_AUTH_ANONYMOUS_ORG_ROLE=Admin
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_DASHBOARDS_MIN_REFRESH_INTERVAL=1s
+    networks:
+      - network_internal
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./testet_grafana/datasources:/etc/grafana/provisioning/datasources
+      - $DASHBOARDS:/etc/grafana/provisioning/dashboards
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+    user: "root:root"
+
+  tester_tsdb:
+    command: postgres
+      -c config_file=/etc/postgresql/postgresql.conf
+      -c hba_file=/etc/postgresql/pg_hba.conf
+    container_name: tester_tsdb
+    healthcheck:
+      test: pg_isready -d db_prod
+      interval: 30s
+      timeout: 60s
+      retries: 5
+      start_period: 80s
+    hostname: tester_tsdb
+    image: timescale/timescaledb:2.21.1-pg17 # https://hub.docker.com/r/timescale/timescaledb/tags
+    networks:
+      - network_internal
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./tester_tsdb/postgresql.conf:/etc/postgresql/postgresql.conf
+      - ./tester_tsdb/pg_hba.conf:/etc/postgresql/pg_hba.conf
+      - ./tester_tsdb/init.sql:/docker-entrypoint-initdb.d/init.sql
+      - /etc/timezone:/etc/timezone:ro
+      - /etc/localtime:/etc/localtime:ro
+      - tester_tsdb_volume:/var/lib/postgresql/data
+
+networks:
+  network_internal:
+
+volumes:
+  tester_tsdb_volume:
+    name: tester_tsdb_volume

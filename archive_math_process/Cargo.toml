@@ -1,0 +1,17 @@
+[package]
+name = "archive_math_process"
+version = "0.0.1"
+edition = "2024"
+
+[dependencies]
+anyhow = "*"
+tokio = { version = "*", features = ["rt-multi-thread"] }
+time = { version = "0.3.41", features = ["formatting", "macros", "serde"] }
+serde = { version = "1.0", features = ["derive"] }
+tracing = "*"
+
+rsiot = { version = "*", path = "../../rsiot", features = [
+    "log_console",
+    "cmp_math",
+    "cmp_timescaledb",
+] }
